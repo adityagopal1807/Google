@@ -97,24 +97,26 @@
 
         function applyGravity() {
             elements.forEach(el => {
-                el.vy += gravity;
-                el.x += el.vx;
-                el.y += el.vy;
+                if (!el.isDragging) {
+                    el.vy += gravity;
+                    el.x += el.vx;
+                    el.y += el.vy;
 
-                // Bounce off the edges of the screen
-                if (el.x <= 0 || el.x + el.width >= window.innerWidth) {
-                    el.vx *= -damping;
-                    el.x = Math.max(0, Math.min(el.x, window.innerWidth - el.width));
+                    // Bounce off the edges of the screen
+                    if (el.x <= 0 || el.x + el.width >= window.innerWidth) {
+                        el.vx *= -damping;
+                        el.x = Math.max(0, Math.min(el.x, window.innerWidth - el.width));
+                    }
+
+                    if (el.y + el.height >= window.innerHeight) {
+                        el.vy *= -damping;
+                        el.y = window.innerHeight - el.height;
+                    }
+
+                    el.element.style.position = 'absolute';
+                    el.element.style.left = `${el.x}px`;
+                    el.element.style.top = `${el.y}px`;
                 }
-
-                if (el.y + el.height >= window.innerHeight) {
-                    el.vy *= -damping;
-                    el.y = window.innerHeight - el.height;
-                }
-
-                el.element.style.position = 'absolute';
-                el.element.style.left = `${el.x}px`;
-                el.element.style.top = `${el.y}px`;
             });
 
             requestAnimationFrame(applyGravity);
@@ -122,7 +124,7 @@
 
         applyGravity();
 
-        // Dragging functionality
+        // Drag-and-drop functionality
         let activeElement = null;
         let offsetX = 0, offsetY = 0;
 
@@ -136,6 +138,7 @@
                     offsetY = e.clientY - el.y;
                     el.vx = 0;
                     el.vy = 0;
+                    el.isDragging = true;
                 }
             });
         });
@@ -144,11 +147,18 @@
             if (activeElement) {
                 activeElement.x = e.clientX - offsetX;
                 activeElement.y = e.clientY - offsetY;
+                activeElement.element.style.left = `${activeElement.x}px`;
+                activeElement.element.style.top = `${activeElement.y}px`;
             }
         });
 
-        document.addEventListener('mouseup', () => {
-            activeElement = null;
+        document.addEventListener('mouseup', (e) => {
+            if (activeElement) {
+                activeElement.vx = e.movementX;
+                activeElement.vy = e.movementY;
+                activeElement.isDragging = false;
+                activeElement = null;
+            }
         });
 
     </script>
