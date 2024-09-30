@@ -124,21 +124,27 @@
 
         applyGravity();
 
-        // Drag-and-drop functionality
+        // Drag-and-drop functionality for both mouse and touch events
         let activeElement = null;
         let offsetX = 0, offsetY = 0;
 
+        // Common function to handle drag start for both mouse and touch
+        function startDrag(el, clientX, clientY) {
+            activeElement = el;
+            offsetX = clientX - el.x;
+            offsetY = clientY - el.y;
+            el.vx = 0;
+            el.vy = 0;
+            el.isDragging = true;
+        }
+
+        // Mouse event listeners
         document.addEventListener('mousedown', (e) => {
             elements.forEach(el => {
                 const rect = el.element.getBoundingClientRect();
                 if (e.clientX >= rect.left && e.clientX <= rect.right &&
                     e.clientY >= rect.top && e.clientY <= rect.bottom) {
-                    activeElement = el;
-                    offsetX = e.clientX - el.x;
-                    offsetY = e.clientY - el.y;
-                    el.vx = 0;
-                    el.vy = 0;
-                    el.isDragging = true;
+                    startDrag(el, e.clientX, e.clientY);
                 }
             });
         });
@@ -152,10 +158,41 @@
             }
         });
 
-        document.addEventListener('mouseup', (e) => {
+        document.addEventListener('mouseup', () => {
             if (activeElement) {
-                activeElement.vx = e.movementX;
-                activeElement.vy = e.movementY;
+                activeElement.vx = 0;
+                activeElement.vy = 0;
+                activeElement.isDragging = false;
+                activeElement = null;
+            }
+        });
+
+        // Touch event listeners for mobile devices
+        document.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            elements.forEach(el => {
+                const rect = el.element.getBoundingClientRect();
+                if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                    touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                    startDrag(el, touch.clientX, touch.clientY);
+                }
+            });
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            if (activeElement) {
+                activeElement.x = touch.clientX - offsetX;
+                activeElement.y = touch.clientY - offsetY;
+                activeElement.element.style.left = `${activeElement.x}px`;
+                activeElement.element.style.top = `${activeElement.y}px`;
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            if (activeElement) {
+                activeElement.vx = 0;
+                activeElement.vy = 0;
                 activeElement.isDragging = false;
                 activeElement = null;
             }
