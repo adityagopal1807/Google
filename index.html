@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Gravity</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #f0f0f0;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        #google-logo {
+            width: 300px;
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #search-container {
+            width: 400px;
+            position: absolute;
+            top: 300px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #search-box {
+            width: 100%;
+            padding: 10px;
+            border-radius: 25px;
+            border: 1px solid #ccc;
+            font-size: 18px;
+        }
+        .search-buttons {
+            margin-top: 20px;
+        }
+        .search-buttons button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: grab;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <img id="google-logo" src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google Logo">
+    
+    <div id="search-container">
+        <input type="text" id="search-box" placeholder="Search Google or type a URL">
+        <div class="search-buttons">
+            <button>Google Search</button>
+            <button>I'm Feeling Lucky</button>
+        </div>
+    </div>
+
+    <script>
+        // Gravity simulation parameters
+        const gravity = 0.5;
+        const damping = 0.8;
+        const dragFactor = 0.99;
+
+        // Initialize elements
+        const elements = [...document.querySelectorAll('img, input, button')].map(el => {
+            return {
+                element: el,
+                x: el.offsetLeft,
+                y: el.offsetTop,
+                vx: 0,
+                vy: 0,
+                width: el.offsetWidth,
+                height: el.offsetHeight
+            };
+        });
+
+        // Physics update loop
+        function applyPhysics() {
+            elements.forEach(el => {
+                el.vy += gravity;
+                el.vx *= dragFactor;
+                el.vy *= dragFactor;
+                el.x += el.vx;
+                el.y += el.vy;
+
+                // Handle collisions with the screen borders
+                if (el.x <= 0 || el.x + el.width >= window.innerWidth) {
+                    el.vx *= -damping;
+                    el.x = el.x <= 0 ? 0 : window.innerWidth - el.width;
+                }
+                if (el.y + el.height >= window.innerHeight) {
+                    el.vy *= -damping;
+                    el.y = window.innerHeight - el.height;
+                }
+
+                // Apply the updated position to the DOM element
+                el.element.style.position = 'absolute';
+                el.element.style.left = `${el.x}px`;
+                el.element.style.top = `${el.y}px`;
+            });
+
+            requestAnimationFrame(applyPhysics);
+        }
+
+        applyPhysics();
+
+        // Drag-and-drop functionality
+        let activeElement = null;
+        let offsetX = 0, offsetY = 0;
+
+        document.addEventListener('mousedown', (e) => {
+            elements.forEach(el => {
+                const rect = el.element.getBoundingClientRect();
+                if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                    e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    activeElement = el;
+                    offsetX = e.clientX - el.x;
+                    offsetY = e.clientY - el.y;
+                    el.vx = 0;
+                    el.vy = 0;
+                }
+            });
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (activeElement) {
+                activeElement.x = e.clientX - offsetX;
+                activeElement.y = e.clientY - offsetY;
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (activeElement) {
+                activeElement.vx = e.movementX;
+                activeElement.vy = e.movementY;
+                activeElement = null;
+            }
+        });
+
+    </script>
+
+</body>
+</html>
